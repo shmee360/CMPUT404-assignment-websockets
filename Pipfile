@@ -1,0 +1,23 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+click = "==7.0"
+gevent = "==1.4.0"
+gevent-websocket = "==0.10.1"
+greenlet = "==0.4.15"
+gunicorn = "==19.9.0"
+itsdangerous = "==1.1.0"
+ws4py = "==0.5.1"
+Flask = "==1.0.2"
+Flask-Sockets = "==0.2.1"
+Jinja2 = "==2.10"
+MarkupSafe = "==1.1.1"
+Werkzeug = "==0.14.1"
+
+[dev-packages]
+
+[requires]
+python_version = "3.8"
