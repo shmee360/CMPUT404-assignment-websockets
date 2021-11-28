@@ -76,28 +76,26 @@ class Client:
         return self.queue.get()
 
 
-def set_listener(entity, data):
-    ''' do something with the update ! '''
+# def set_listener(entity, data):
+#     ''' do something with the update ! '''
 
 
-myWorld.add_set_listener( set_listener )
+# myWorld.add_set_listener( set_listener )
 
-clients: List[Client] = list()
-        
 @app.route('/')
 def hello():
     return redirect('/static/index.html')
 
-def read_ws(ws, client):
+def read_ws(ws):
     '''A greenlet function that reads from the websocket and updates the world'''
     try:
         while True:
             msg = ws.receive()
 
             if msg is not None:
-                packet = json.dumps(json.loads(msg))
-                for client in clients:
-                    client.put(packet)
+                change = json.loads(msg)
+                for k, v in change.items():
+                    myWorld.set(k, v)
             else:
                 break
     except JSONDecodeError as _:
@@ -108,8 +106,14 @@ def subscribe_socket(ws):
     '''Fufill the websocket URL of /subscribe, every update notify the
        websocket and read updates from the websocket '''
     client = Client()
-    clients.append(client)
-    g = gevent.spawn(read_ws, ws, client)
+
+    def listener(entity, data):
+        packet = json.dumps({ entity: data })
+        client.put(packet)
+
+    myWorld.add_set_listener(listener)
+
+    g = gevent.spawn(read_ws, ws)
 
     try:
         while True:
@@ -118,7 +122,7 @@ def subscribe_socket(ws):
     except Exception as e:
         print('Websocket Error:', e)
     finally:
-        clients.remove(client)
+        myWorld.listeners.remove(listener)
         gevent.kill(g)
 
     return {}
