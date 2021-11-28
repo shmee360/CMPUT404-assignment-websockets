@@ -163,7 +163,7 @@ def clear():
     '''Clear the world out!'''
     myWorld.clear()
 
-    return flask.jsonify(dict())
+    return json.dumps(dict())
 
 
 if __name__ == "__main__":
