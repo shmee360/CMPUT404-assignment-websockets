@@ -13,16 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from json.decoder import JSONDecodeError
-from typing import List
+# Modifications copyright © 2021 Warren Stix
+#
+
 import flask
 from flask import Flask, request, redirect
 from flask_sockets import Sockets
 import gevent
 from gevent import queue
-import time
 import json
-import os
 
 app = Flask(__name__)
 sockets = Sockets(app)
@@ -65,6 +64,9 @@ class World:
 myWorld = World()        
 
 
+# Client class and related code from:
+#  https://raw.githubusercontent.com/abramhindle/WebSocketsExamples/master/chat.py
+# Gotta handle that producer-consumer problem!
 class Client:
     def __init__(self):
         self.queue = queue.Queue()
@@ -75,12 +77,6 @@ class Client:
     def get(self):
         return self.queue.get()
 
-
-# def set_listener(entity, data):
-#     ''' do something with the update ! '''
-
-
-# myWorld.add_set_listener( set_listener )
 
 @app.route('/')
 def hello():
