@@ -44,18 +44,32 @@ debug("Test");
 
 world = {};
 
-//XXX: TODO Make this prettier!
 function drawCircle(context,entity) {
     with(context) {
-        beginPath();                
-        lineWidth = 3;
-        var x = entity["x"];
-        var y = entity["y"];
-        //moveTo(x,y);
-        fillStyle = entity["colour"];
-        strokeStyle = fillStyle;
-        arc(x, y, (entity["radius"])?entity["radius"]:50, 0, 2.0 * Math.PI, false);  
-        stroke();                                
+		beginPath();
+
+        var x1 = entity["x"];
+        var y1 = entity["y"];
+
+		var radius = (entity["radius"])?entity["radius"]:50;
+		var outerRadius = radius * 1.15;
+		var innerRadius = outerRadius * 0.075;
+
+		var x0 = x1 - radius * 0.4;
+		var y0 = y1 - radius * 0.65;
+
+		var gradient = createRadialGradient(x0, y0, innerRadius, x1, y1, outerRadius);
+		gradient.addColorStop(0, 'white');
+		gradient.addColorStop(1, entity["colour"]);
+
+		arc(x1, y1, radius, 0, 2 * Math.PI);
+
+		fillStyle = gradient;
+
+		shadowBlur = 0.4 * radius;
+		shadowColor = entity["colour"];
+
+		fill();
     }
 }
 
@@ -125,6 +139,7 @@ function addEntity(entity, data) {
     world[entity] = data;
     drawNextFrame(); // (but should we?)
     //XXX: Send a XHTML Request that updates the entity you just modified!
+	socket.send(JSON.stringify({ [entity]: data }));
 }
 var counter = 0;
 function addEntityWithoutName(data) {
@@ -229,7 +244,6 @@ mouse = (function() {
 })();
 
 // Add the application specific mouse listeners!
-//XXX: TODO Make these prettier!
 mouse.mousedowners.push(function(x,y,clicked,e) {
     addEntityWithoutName({'x':x,'y':y,'colour':'blue'});
 });
@@ -243,7 +257,6 @@ mouse.mousedraggers.push(function(x,y,clicked,e) {
                           'radius':10});
 });
 
-
 function update() {
     drawFrame();
 }
@@ -254,14 +267,25 @@ function wsSetup() {
     socket = new WebSocket(url);
     socket.onopen = function() {
         //XXX: TODO What are you going to do here?
+		debug("WebSocket Opened");
     };
     socket.onerror = function(msg) {
         debug("WebSocket Error:" + msg.data);
     };
     socket.onmessage = function(msg) {  
         try {
-            debug("WebSocket Recv:" + msg.data);
-            //XXX: TODO What are you going to do here?            
+			if (Object.keys(msg.data).length > 64) {
+				debug("Getting existing World");
+			} else {
+            	debug("WebSocket Recv:" + msg.data);
+			}
+
+			wscounter++
+			var msgObj = JSON.parse(msg.data);
+			for (var prop in msgObj) {
+				world[prop] = msgObj[prop];
+			}
+			drawNextFrame();
         } catch (e) {
             alert("socket on message: " + e);
         }

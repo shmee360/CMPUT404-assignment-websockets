@@ -89,6 +89,9 @@ def hello():
 def read_ws(ws):
     '''A greenlet function that reads from the websocket and updates the world'''
     try:
+        # send the existing world
+        ws.send(json.dumps(myWorld.world()))
+
         while True:
             msg = ws.receive()
 
@@ -98,8 +101,8 @@ def read_ws(ws):
                     myWorld.set(k, v)
             else:
                 break
-    except JSONDecodeError as _:
-        print('Error decoding received message!')
+    except Exception as e:
+        print('Error:', e)
 
 @sockets.route('/subscribe')
 def subscribe_socket(ws):
@@ -125,7 +128,7 @@ def subscribe_socket(ws):
         myWorld.listeners.remove(listener)
         gevent.kill(g)
 
-    return {}
+    return flask.jsonify(dict())
 
 
 # I give this to you, this is how you get the raw body/data portion of a post in flask
@@ -146,17 +149,17 @@ def update(entity):
     data = flask_post_json()[entity]
     myWorld.set(entity, data)
 
-    return { entity: myWorld.get(entity) }
+    return json.dumps({ entity: myWorld.get(entity) })
 
 @app.route("/world", methods=['POST','GET'])    
 def world():
-    return myWorld.world()
+    return json.dumps(myWorld.world())
 
 @app.route("/entity/<entity>")    
 def get_entity(entity):
     data = myWorld.get(entity)
 
-    return data
+    return flask.jsonify(data)
 
 
 @app.route("/clear", methods=['POST','GET'])
@@ -164,7 +167,7 @@ def clear():
     '''Clear the world out!'''
     myWorld.clear()
 
-    return dict()
+    return flask.jsonify(dict())
 
 
 if __name__ == "__main__":
